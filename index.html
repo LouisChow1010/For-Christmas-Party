@@ -3,10 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Who's That? – Flash + SFX + Fullscreen</title>
+  <title>Who's That? – Flash + SFX</title>
+
   <style>
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; }
+
     body {
       background: #0b0f1a;
       display: grid;
@@ -28,16 +30,6 @@
       outline: none;
     }
 
-    /* Full Screen */
-    :fullscreen .stage,
-    :-webkit-full-screen .stage {
-      width: 100vw;
-      height: 100vh;
-      aspect-ratio: auto;
-      border-radius: 0;
-      box-shadow: none;
-    }
-
     .img {
       position: absolute;
       inset: 0;
@@ -50,14 +42,23 @@
 
     #silImg {
       opacity: 1;
-      transition: opacity 1.2s ease-in-out, filter 1.2s ease-in-out, transform 1.2s ease-in-out;
+      transition:
+        opacity 1.2s ease-in-out,
+        filter 1.2s ease-in-out,
+        transform 1.2s ease-in-out;
     }
 
-    /* Flashlight */
+    /* Flash effect */
     .flash {
       position: absolute;
       inset: 0;
-      background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.8) 35%, rgba(255,255,255,0.4) 55%, rgba(255,255,255,0) 70%);
+      background: radial-gradient(
+        circle,
+        rgba(255,255,255,0.95) 0%,
+        rgba(255,255,255,0.8) 35%,
+        rgba(255,255,255,0.4) 55%,
+        rgba(255,255,255,0) 70%
+      );
       opacity: 0;
       pointer-events: none;
     }
@@ -73,9 +74,9 @@
     }
 
     @keyframes flash {
-      0% { opacity: 0; }
-      20% { opacity: 1; }
-      60% { opacity: .9; }
+      0%   { opacity: 0; }
+      20%  { opacity: 1; }
+      60%  { opacity: 0.9; }
       100% { opacity: 0; }
     }
 
@@ -95,91 +96,51 @@
       max-width: calc(100% - 24px);
     }
 
-    .revealed .hint { opacity: 0; }
-
-    .badge {
-      position: absolute;
-      top: 12px;
-      left: 12px;
-      background: rgba(0,0,0,.45);
-      padding: 6px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      backdrop-filter: blur(8px);
+    .revealed .hint {
       opacity: 0;
-      transition: opacity 250ms ease;
     }
-
-    .badge.show { opacity: 1; }
   </style>
 </head>
+
 <body>
 
-  <div class="stage" id="stage" tabindex="0" aria-label="点击揭晓">
+  <div class="stage" id="stage" tabindex="0" aria-label="Tap to reveal">
     <img class="img" id="revealImg" src="reveal.png" alt="Revealed" />
     <img class="img" id="silImg" src="silhouette.png" alt="Silhouette" />
-    <div class="flash" id="flash"></div>
+    <div class="flash"></div>
 
-    <div class="badge" id="fsBadge">Entered full-screen mode.</div>
-    <div class="hint" id="hint">Tap the screen!</div>
+    <div class="hint">Tap the screen!</div>
   </div>
-
 
   <script>
     const stage = document.getElementById('stage');
-    const fsBadge = document.getElementById('fsBadge');
+
+    // Sound effects
     const sfxWho = new Audio('whos-that.mp3');
     const sfxFlash = new Audio('flash.mp3');
     sfxWho.preload = 'auto';
     sfxFlash.preload = 'auto';
 
-    // Full Screen (Request)
-    async function enterFullscreen() {
-      const el = document.documentElement;
-      const req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
-      if (!req) return false;
-      try {
-        await req.call(el);
-        return true;
-      } catch {
-        return false;
-      }
-    }
-
-    function inFullscreen() {
-      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
-    }
-
-    function showFSBadge() {
-      fsBadge.classList.add('show');
-      setTimeout(() => fsBadge.classList.remove('show'), 900);
-    }
-
     function playSfxForReveal(isRevealing) {
       if (!isRevealing) return;
 
       try {
-        sfxWho.pause(); sfxWho.currentTime = 0;
-        sfxFlash.pause(); sfxFlash.currentTime = 0;
+        sfxWho.pause();
+        sfxWho.currentTime = 0;
+        sfxFlash.pause();
+        sfxFlash.currentTime = 0;
 
+        // Play voice first
         sfxWho.play().catch(() => {});
 
-        // Start flashing after 450ms
+        // Flash sound after 450ms
         setTimeout(() => {
           sfxFlash.play().catch(() => {});
         }, 450);
       } catch {}
     }
 
-    let firstTapDone = false;
-
-    async function handleTap() {
-      if (!firstTapDone) {
-        firstTapDone = true;
-        const ok = await enterFullscreen();
-        if (ok) showFSBadge();
-      }
-
+    function handleTap() {
       const isRevealing = !stage.classList.contains('revealed');
       stage.classList.toggle('revealed');
       playSfxForReveal(isRevealing);
@@ -192,11 +153,7 @@
         handleTap();
       }
     });
-
-    document.addEventListener('fullscreenchange', () => {
-    });
-    document.addEventListener('webkitfullscreenchange', () => {});
-
   </script>
+
 </body>
 </html>
